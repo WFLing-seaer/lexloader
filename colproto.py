@@ -37,9 +37,13 @@ class ColProtoABC[T](ABC):
     data: AwkwardLike
 
 
-class JITColABC[T](ABC):
+class JITColABC[T](ColProtoABC):
     @abstractmethod
     def __init__(self, from_: T) -> None: ...
+
+    @staticmethod
+    def from_python(*_, **_____):
+        return NotImplemented
 
 
 class PlainText(ColProtoABC[str]):
@@ -152,7 +156,7 @@ class Float64(_Float):
         return ak.Array(np.array(raw, dtype=np.float64))
 
 
-class _Coplex(ColProtoABC[complex]):
+class _Complex(ColProtoABC[complex]):
     def query(self, method: str, target: complex) -> AwkwardLike:
         match method:
             case "eq":
@@ -162,13 +166,13 @@ class _Coplex(ColProtoABC[complex]):
         raise ValueError(f"方法 {method} 不存在 @ Complex")
 
 
-class Complex64(_Coplex):
+class Complex64(_Complex):
     @staticmethod
     def from_python(raw: list[complex]) -> ak.Array:
         return ak.Array(np.array(raw, dtype=np.complex64))
 
 
-class Complex128(_Coplex):
+class Complex128(_Complex):
     @staticmethod
     def from_python(raw: list[complex]) -> ak.Array:
         return ak.Array(np.array(raw, dtype=np.complex128))
@@ -343,10 +347,6 @@ class _Length(JITColABC[PlainText], _Int):
     def __init__(self, from_: PlainText) -> None:
         self.data = asAwkwardLike(ak.Array(self.__p_len(from_.data.layout.offsets.data, from_.data.layout.content.data)))
 
-    @staticmethod
-    def from_python(*_, **_____):
-        return NotImplemented
-
 
 class Length8(_Length, UInt8):
     @staticmethod
@@ -431,6 +431,11 @@ PROTO_NAMES: dict[str, type[ColProtoABC]] = {
     "F64": Float64,
     "C64": Complex64,
     "C128": Complex128,
+    "EN8": Enum8,
+    "EN16": Enum16,
+    "EN32": Enum32,
+    "EN64": Enum64,
+    "PY": Pinyin,
 }
 
 JIT_NAMES: dict[str, type[JITColABC]] = {
